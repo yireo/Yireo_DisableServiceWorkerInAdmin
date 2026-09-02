@@ -1,0 +1,7 @@
+{
+    "module_name": "Yireo_DisableServiceWorkerInAdmin",
+    "composer_name": "yireo/magento2-disable-service-worker-in-admin",
+    "sequence": [
+        "Magento_Backend"
+    ]
+}
