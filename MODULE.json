@@ -3,5 +3,7 @@
     "composer_name": "yireo/magento2-disable-service-worker-in-admin",
     "sequence": [
         "Magento_Backend"
-    ]
+    ],
+    "phpcs_severity": "1",
+    "phpstan_level": "9"
 }
