@@ -1,11 +1,64 @@
-<script>
-    if (navigator.serviceWorker) {
-        navigator.serviceWorker.getRegistrations().then(
-            function (registrations) {
-                for (let registration of registrations) {
-                    registration.unregister();
-                }
-            }
-        );
+<?php
+declare(strict_types=1);
+
+use Magento\Framework\View\Element\Template;
+use Magento\Framework\View\Helper\SecureHtmlRenderer;
+
+/** @var Template $block */
+/** @var SecureHtmlRenderer $secureRenderer */
+
+$script = <<<'SCRIPT'
+(function () {
+    if (!('serviceWorker' in navigator)) {
+        return;
     }
-</script>
+
+    const reloadFlag = 'yireo_disable_service_worker_reloaded';
+    const controlled = !!navigator.serviceWorker.controller;
+    const storage = {
+        get: function () {
+            try {
+                return sessionStorage.getItem(reloadFlag);
+            } catch (e) {
+                return '1';
+            }
+        },
+        set: function () {
+            try {
+                sessionStorage.setItem(reloadFlag, '1');
+                return true;
+            } catch (e) {
+                return false;
+            }
+        },
+        clear: function () {
+            try {
+                sessionStorage.removeItem(reloadFlag);
+            } catch (e) {
+            }
+        }
+    };
+
+    if (!controlled) {
+        storage.clear();
+    }
+
+    navigator.serviceWorker.getRegistrations().then(function (registrations) {
+        const covering = registrations.filter(function (registration) {
+            return location.href.indexOf(registration.scope) === 0;
+        });
+
+        return Promise.all(covering.map(function (registration) {
+            return registration.unregister();
+        }));
+    }).then(function (results) {
+        if (controlled && results.indexOf(true) !== -1 && !storage.get() && storage.set()) {
+            location.reload();
+        }
+    }).catch(function (error) {
+        console.warn('Unable to unregister service workers', error);
+    });
+})();
+SCRIPT;
+?>
+<?= /* @noEscape */ $secureRenderer->renderTag('script', [], $script, false) ?>
